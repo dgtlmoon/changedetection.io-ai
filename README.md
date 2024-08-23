@@ -25,4 +25,45 @@ Simply use this application as the `PRICE_SCRAPER_ML_ENDPOINT` from your [change
 Changedetection.io will query this service by sending its specially scraped data (a long list of information about each 
 DOM element such as font colour, weight, text size etc) and return what it thinks is the best match.
 
+### Nerdy stuff
 
+**What is this?** It's just a _binary classification_ model for iterating over all of the scraped DOM elements and
+returns the best match.
+
+**Is it fast?** Oh yeah! According to Apache Benchmark
+
+```bash
+ab -p elements/set-12.json -T application/json -c 5 -n 100 http://127.0.0.1:5005/price-element
+
+Concurrency Level:      5
+Time taken for tests:   5.657 seconds
+Complete requests:      100
+Failed requests:        0
+Requests per second:    17.68 [#/sec] (mean)
+Time per request:       282.829 [ms] (mean)
+Time per request:       56.566 [ms] (mean, across all concurrent requests)
+
+```
+
+**56ms per request!** that's fast! without GPU on a regular `Intel(R) Core(TM) i7-10510U CPU @ 1.80GHz`
+
+When tested with `curl`, its 0.06 seconds including the time to run the curl app and execute it.
+
+```bash
+$ time curl -s -X POST http://127.0.0.1:5005/price-element --data-binary @elements/set-12.json -H "Content-Type: application/json"|python -mjson.tool
+{
+    "bin": 1,
+    "idx": 273,
+    "score": 0.9991648197174072
+}
+
+real    0m0.062s
+user    0m0.015s
+sys     0m0.004s
+
+```
+
+`idx` = `273` means that it recommends using element #273 in the scraped list of elements.
+
+
+Have fun!

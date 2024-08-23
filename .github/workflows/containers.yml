@@ -1,0 +1,94 @@
+name: Build and push containers
+
+on:
+  # Automatically triggered by a testing workflow passing, but this is only checked when it lands in the `master`/default branch
+#  workflow_run:
+#    workflows: ["ChangeDetection.io Test"]
+#    branches: [master]
+#    tags: ['0.*']
+#    types: [completed]
+
+  # Or a new tagged release
+  release:
+    types: [published, edited]
+
+  push:
+    branches:
+      - master
+
+jobs:
+  metadata:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Show metadata
+      run: |
+        echo SHA ${{ github.sha }}
+        echo github.ref:  ${{ github.ref }}
+        echo github_ref: $GITHUB_REF
+        echo Event name: ${{ github.event_name }}
+        echo Ref ${{ github.ref }}
+        echo c: ${{ github.event.workflow_run.conclusion }}
+        echo r: ${{ github.event.workflow_run }}
+        echo tname: "${{ github.event.release.tag_name }}"
+        echo headbranch: -${{ github.event.workflow_run.head_branch }}-
+        set
+
+  build-push-containers:
+    runs-on: ubuntu-latest
+    # If the testing workflow has a success, then we build to :latest
+    # Or if we are in a tagged release scenario.
+    #if: ${{ github.event.workflow_run.conclusion == 'success' }} || ${{ github.event.release.tag_name }} != ''
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          image: tonistiigi/binfmt:latest
+          platforms: all
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Login to Docker Hub Container Registry
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          install: true
+          version: latest
+          driver-opts: image=moby/buildkit:master
+
+      # master branch -> :latest container tag
+      - name: Build and push :latest
+        id: docker_build
+        if: ${{ github.ref }} == "refs/heads/master"
+        uses: docker/build-push-action@v6
+        with:
+          context: ./
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_HUB_USERNAME }}/changedetection.io-ai:latest,ghcr.io/${{ github.repository }}:latest
+          #platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v8,linux/arm64/v8
+          platforms: linux/amd64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

@@ -1,12 +1,17 @@
 # AI / Machine Learning Helper for Changedetection.io
 
-<img src="docs/AI-MachineLearning-scraper.jpg">
+<img src="docs/AI-MachineLearning-scraper.jpg" alt="Ai Machine Learning scraper for changedetection.io product prices" title="Ai Machine Learning scraper for changedetection.io product prices" />
 
 Licence: Used under the same dual-licencing as changedetection ( [Apache2.0](COMMERCIAL_LICENCE.md), [Commercial](COMMERCIAL_LICENCE.md) )
 
 So far this project contains one AI/ML helper, but more to come.
 
 # Automatically identify page elements containing price information
+
+Available for **linux/amd64**, more to come!
+
+For use with changedetection.io **v0.46.04** and newer!
+
 
 **Problem solved**: A product page does not contain any semantic data (LD-JSON product data etc) and you want the price data for the product.
 Fortunately the price "text" is generally always of nice text size, color, font weight, position on the screen, contains 

@@ -37,10 +37,11 @@ def retrain(json_elements_files: []):
     ### augment more data
     # Extract price elements
     price_elements = [element for element in elements if element.get('label', '') == 'price']
+    logger.info(f"Of which {len(price_elements)} are 'price' elements..")
 
     # Number of new elements to generate
-    # num_new_elements = len(elements) - int(len(price_elements) / 10)
-    num_new_elements = 500
+    num_new_elements = len(elements) - int(len(price_elements)/2)
+    #num_new_elements = 0
 
     for i in range(num_new_elements):
         # Make a deep copy of a random price element
@@ -58,7 +59,7 @@ def retrain(json_elements_files: []):
         # Append the modified element back to the elements list
         elements.append(random_price_element)
 
-    logger.info(f"Found {len(elements)} elements after augmenting more data with 'price' label, added {num_new_elements} new elements")
+    logger.info(f"Found {len(elements)} elements after augmenting more data with 'price' label, added {num_new_elements} new 'price' elements to balance the learning")
 
     # find the element with label='price' and then make the same amount of entries again
 
@@ -83,7 +84,7 @@ def retrain(json_elements_files: []):
     model = compile_model(model, learning_rate=0.00001)
 
     # Train the model
-    model.fit(X_train_reshaped, y_train, epochs=50, batch_size=32, validation_split=0.4)
+    model.fit(X_train_reshaped, y_train, epochs=75, batch_size=32, validation_split=0.4)
 
     # Save the trained model
     model.save('../trained_model.keras')
@@ -122,6 +123,11 @@ def find_watch_element_files_with_visualselector_set(path_to_datapath):
 
                 if watch.get('include_filters'):
                     elements_json_file = os.path.join(path_to_datapath, uuid, 'elements.json')
+                    if not os.path.isfile(elements_json_file):
+                        logger.warning(f"Elements file {elements_json_file} missing, skipping.")
+                        continue
+                    else:
+                        logger.debug(f"Parsing {elements_json_file}")
 
                     # rewrite (!) the elements.json file and set the label="price" on any xpath that matches this include_filters
                     with open(elements_json_file, 'r') as f:
@@ -129,7 +135,7 @@ def find_watch_element_files_with_visualselector_set(path_to_datapath):
                         for idx, elem in enumerate(data.get('size_pos', [])):
                             if not elem.get('textWidth'):
                                 continue
-                            if any(elem.get('xpath', '') in item for item in watch.get('include_filters')):
+                            if any(elem.get('xpath', '') == item for item in watch.get('include_filters', [])):
                                 elem['label'] = "price"
                                 labels_set += 1
 
@@ -153,8 +159,10 @@ if __name__ == '__main__':
     json_files = []
 
     if args.datadir:
+        logger.info(f"Training on custom changedetection.io dataset at {args.datadir}/url-watches.json")
         json_files = find_watch_element_files_with_visualselector_set(path_to_datapath=args.datadir)
     else:
+        logger.info(f"Training on existing training files at elements/")
         json_files = glob.glob(os.path.join('elements/', '*.json'), recursive=False)
         retrain(json_elements_files=json_files)
 

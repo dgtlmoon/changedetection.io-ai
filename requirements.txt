@@ -1,9 +1,9 @@
-tensorflow==2.17.0
-keras
 #h5py==3.6.0
-h5py==3.10.0
-loguru
-uvicorn
 fastapi
+h5py==3.10.0
+inotify
+keras
+loguru
 price-parser
-
+tensorflow==2.17.0
+uvicorn

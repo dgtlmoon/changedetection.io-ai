@@ -1,5 +1,5 @@
 tag_name_map = {'span': 0, 'div': 1, 'a': 2, 'p': 3, 'li': 4, 'h2': 5, 'h3': 6, 'h4': 7, 'h1': 7}
-from price_parser import Price
+
 import re
 
 

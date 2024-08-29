@@ -14,7 +14,7 @@ import os
 import tempfile
 
 
-def retrain(json_elements_files: []):
+def retrain(json_elements_files: [], epoch_count=30):
     import tensorflow as tf
 
     elements = []
@@ -85,7 +85,7 @@ def retrain(json_elements_files: []):
     model = compile_model(model, learning_rate=0.00001)
 
     # Train the model
-    model.fit(X_train_reshaped, y_train, epochs=30, batch_size=32, validation_split=0.3)
+    model.fit(X_train_reshaped, y_train, epochs=epoch_count, batch_size=32, validation_split=0.3)
 
     logger.success("Saving model")
     model.save('trained_model.keras')
@@ -202,8 +202,11 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--datadir', type=validate_directory, default='',
                         help='Path to data-dir which contains url-watches.json, must be path only')
 
-    parser.add_argument('-e', '--elements', type=str, default='',
+    parser.add_argument('-j', '--jsonelements', type=str, default='',
                         help='Path to a single elements.json file, re-runs prediction for proof')
+
+    parser.add_argument('-e', '--epochs', type=int, default=30,
+                        help='Number of epochs to train')
 
     # Parse the arguments
     args = parser.parse_args()
@@ -218,13 +221,13 @@ if __name__ == '__main__':
     if args.datadir:
         logger.info(f"Training on custom changedetection.io dataset at {args.datadir}/url-watches.json")
         json_files = find_watch_element_files_with_visualselector_set(path_to_datapath=args.datadir)
-    elif args.elements:
-        logger.info(f"Training on a single elements file at {args.elements}")
+    elif args.jsonelements:
+        logger.info(f"Training {args.epochs} epochs on a single elements file at {args.jsonelements}")
 
 
-        retrain(json_elements_files=[args.elements])
+        retrain(json_elements_files=[args.jsonelements], epoch_count=args.epochs)
         if os.path.isfile("trained_model.keras"):
-            with open(args.elements, 'r') as f:
+            with open(args.jsonelements, 'r') as f:
                 from app import predict
                 data = json.load(f)
                 prediction = predict.perform_prediction(data=data)

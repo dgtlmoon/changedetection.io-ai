@@ -233,7 +233,8 @@ if __name__ == '__main__':
             with open(args.jsonelements, 'r') as f:
                 from app import predict
                 data = json.load(f)
-                prediction = predict.perform_prediction(data=data)
+                elements = helpers.get_filtered_elements(data['size_pos'])
+                prediction = predict.perform_prediction(elements=elements)
                 logger.info(prediction)
                 logger.success(data['size_pos'][prediction.get('idx')])
     else:

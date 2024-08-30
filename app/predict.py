@@ -35,10 +35,9 @@ def monitor_model_file():
 monitor_thread = threading.Thread(target=monitor_model_file, daemon=True)
 monitor_thread.start()
 
-def perform_prediction(data):
+def perform_prediction(elements: list):
     from app.extract_features import extract_features
-    # Extract the 'size_pos' list, filter small, big, out of size elements and add `original_idx` for future use
-    elements = helpers.get_filtered_elements(data['size_pos'])
+
 
     # Prepare the data for prediction
     X_new = np.array([extract_features(element) for element in elements])

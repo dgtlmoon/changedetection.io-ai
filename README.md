@@ -25,6 +25,21 @@ Simply use this application as the `PRICE_SCRAPER_ML_ENDPOINT` from your [change
 Changedetection.io will query this service by sending its specially scraped data (a long list of information about each 
 DOM element such as font colour, weight, text size etc) and return what it thinks is the best match.
 
+## Re-train the model for your exact needs
+
+Although the model ships with quite a nice default, here's some notes for training with your own dataset.
+
+- All selector rules (CSS/xPath) should point to the exact DOM element that contains the price value, it's important that it can find information such as `font-height` length of text etc.
+- For pages like amazon that have the "cents" in a separate DOM element, always point it to the main "dollars" selecteor which has the best font-size and other information
+- Point `train_model.py` at the path to your datasource for your changedetection.io installation (where the `url-watches.json` file lives)
+- Always only have "watches" setup with working selectors that only point to the price information
+
+```
+./train_model.py -e 30 -d /path/to/changedetection.io-data
+```
+
+
+
 ### Nerdy stuff
 
 **What is this?** It's just a _binary classification_ model for iterating over all of the scraped DOM elements and

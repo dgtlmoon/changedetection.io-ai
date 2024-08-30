@@ -42,19 +42,22 @@ def retrain(json_elements_files: [], epoch_count=30):
 
     # Number of new elements to generate
     num_new_elements = len(elements) - int(len(price_elements))
-
+    num_new_elements=len(elements) *.7
     for i in range(int(num_new_elements)):
         # Make a deep copy of a random price element
         random_price_element = deepcopy(random.choice(price_elements))
 
         # Randomly modify the copied element
-        random_price_element['height'] += random.randint(-5, 10)
-        random_price_element['top'] += random.randint(-5, 100)
-        random_price_element['left'] += random.randint(-250, 200)
+        random_price_element['height'] += random.randint(-5, 5)
+        random_price_element['top'] += random.randint(-5, 200)
+        random_price_element['left'] += random.randint(-250, 400)
 
-        # Ensure fontWeight is an integer and then modify it
-        random_price_element['fontWeight'] = int(random_price_element.get('fontWeight', 0))
-        random_price_element['fontWeight'] += random.randint(1, 200)
+        random_price_element['fontWeight'] = int(random_price_element['fontWeight'])+random.randint(1, 200)
+
+        # Leave this out for now, it causes widths and textlength etc to go out of sync
+#        random_price_element['textLength'] += random.randint(-1, 3)
+        # Make up a suitable fake value for textWidth according to textLength
+#        random_price_element['textWidth'] = random_price_element['textLength'] * random.randint(11, 12)
 
         # Append the modified element back to the elements list
         elements.append(random_price_element)
@@ -85,7 +88,7 @@ def retrain(json_elements_files: [], epoch_count=30):
     model = compile_model(model, learning_rate=0.00001)
 
     # Train the model
-    model.fit(X_train_reshaped, y_train, epochs=epoch_count, batch_size=32, validation_split=0.3)
+    model.fit(X_train_reshaped, y_train, epochs=epoch_count, batch_size=32, validation_split=0.4)
 
     logger.success("Saving model")
     model.save('trained_model.keras')
@@ -153,7 +156,7 @@ def print_matching_snapshot_html(path_to_datadir, xpath_query):
         logger.critical(f"{path_to_datadir} missing '{xpath_query}'")
 
 
-def find_watch_element_files_with_visualselector_set(path_to_datapath):
+def find_watch_element_files_with_visualselector_set(path_to_datapath , epoch_count):
     element_files = []
     labels_set = 0
 
@@ -193,7 +196,7 @@ def find_watch_element_files_with_visualselector_set(path_to_datapath):
         logger.info(f"Done, found {labels_set} matching selectors from the custom filters, now starting training..")
         json_files = glob.glob(os.path.join(temp_dir, '*.json'), recursive=False)
 
-        retrain(json_elements_files=json_files)
+        retrain(json_elements_files=json_files, epoch_count=epoch_count)
 
 
 if __name__ == '__main__':
@@ -220,7 +223,7 @@ if __name__ == '__main__':
 
     if args.datadir:
         logger.info(f"Training on custom changedetection.io dataset at {args.datadir}/url-watches.json")
-        json_files = find_watch_element_files_with_visualselector_set(path_to_datapath=args.datadir)
+        json_files = find_watch_element_files_with_visualselector_set(path_to_datapath=args.datadir, epoch_count=args.epochs)
     elif args.jsonelements:
         logger.info(f"Training {args.epochs} epochs on a single elements file at {args.jsonelements}")
 
@@ -236,6 +239,6 @@ if __name__ == '__main__':
     else:
         logger.info(f"Training on existing training files at elements/")
         json_files = glob.glob(os.path.join('elements/', '*.json'), recursive=False)
-        retrain(json_elements_files=json_files)
+        retrain(json_elements_files=json_files, epoch_count=args.epochs)
 
 #

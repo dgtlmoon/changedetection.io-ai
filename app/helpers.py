@@ -16,6 +16,10 @@ def get_filtered_elements(data):
             # Likely off page or in some top menu or no use anyway
             continue
 
+        # It's a string thats probably longer than "$3" but contains a very low % of numerical text
+        if element.get('textLength', 0) > 3 and element.get('pcNumerical', 0) < 30:
+            continue
+
         element.update({'original_idx': idx})
         elements.append(element)
 
